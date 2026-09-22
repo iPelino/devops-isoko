@@ -9,6 +9,15 @@ class ProductSerializer(serializers.ModelSerializer):
         fields = ["id", "name", "cooperative", "price_rwf"]
 
 
+class OrderSerializer(serializers.ModelSerializer):
+    """Read representation for GET /orders - product is the product id."""
+
+    class Meta:
+        model = Order
+        fields = ["id", "product", "quantity", "created_at"]
+        read_only_fields = fields
+
+
 class OrderCreateSerializer(serializers.ModelSerializer):
     """Write representation for POST /orders.
 

@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import Product
-from .serializers import OrderCreateSerializer, ProductSerializer
+from .serializers import OrderCreateSerializer, OrderSerializer, ProductSerializer
 
 
 class HealthView(APIView):
@@ -64,11 +64,18 @@ class ProductDetailView(generics.RetrieveAPIView):
     permission_classes = [AllowAny]
 
 
-class OrderListCreateView(generics.CreateAPIView):
-    """POST /orders - authenticated; the order is always tied to the requester."""
+class OrderListCreateView(generics.ListCreateAPIView):
+    """GET/POST /orders - authenticated; always scoped to the requesting user."""
 
     permission_classes = [IsAuthenticated]
-    serializer_class = OrderCreateSerializer
+
+    def get_queryset(self):
+        return self.request.user.orders.select_related("product")
+
+    def get_serializer_class(self):
+        if self.request.method == "POST":
+            return OrderCreateSerializer
+        return OrderSerializer
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)

@@ -82,3 +82,54 @@ class PlaceOrderTests(OrderTestsBase):
         self.assertEqual(response.status_code, 201)
         order = Order.objects.get(id=response.json()["order_id"])
         self.assertEqual(order.user, self.user)
+
+
+class OrderHistoryTests(OrderTestsBase):
+    def test_empty_history_returns_empty_list(self):
+        self.authenticate()
+
+        response = self.client.get("/orders")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), [])
+
+    def test_list_own_orders(self):
+        self.authenticate()
+        self.client.post(
+            "/orders", {"product_id": self.product.id, "quantity": 1}, format="json"
+        )
+
+        response = self.client.get("/orders")
+
+        self.assertEqual(response.status_code, 200)
+        orders = response.json()
+        self.assertEqual(len(orders), 1)
+        self.assertTrue(
+            all("id" in o and "product" in o and "quantity" in o for o in orders)
+        )
+
+    def test_orders_are_isolated_between_users(self):
+        """Not covered by the workshop's official acceptance suite (single seeded
+        buyer only) - added here because the scenario calls it a standing
+        requirement.
+        """
+        self.authenticate()
+        self.client.post(
+            "/orders", {"product_id": self.product.id, "quantity": 1}, format="json"
+        )
+
+        other_user = User.objects.create_user(
+            username="buyer2", password="isoko-demo-2"
+        )
+        login = self.client.post(
+            "/login", {"username": "buyer2", "password": "isoko-demo-2"}, format="json"
+        )
+        other_client_token = login.json()["token"]
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {other_client_token}")
+
+        response = self.client.get("/orders")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), [])
+        self.assertEqual(Order.objects.filter(user=other_user).count(), 0)
+        self.assertEqual(Order.objects.filter(user=self.user).count(), 1)
