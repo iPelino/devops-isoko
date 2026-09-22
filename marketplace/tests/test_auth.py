@@ -36,3 +36,8 @@ class LoginTests(APITestCase):
 
     def test_new_user_gets_a_default_buyer_profile(self):
         self.assertEqual(self.user.profile.role, Profile.Role.BUYER)
+
+    def test_orders_requires_authentication(self):
+        response = self.client.get("/orders")
+
+        self.assertEqual(response.status_code, 401)

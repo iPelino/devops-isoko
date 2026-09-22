@@ -1,12 +1,12 @@
 from django.contrib.auth import authenticate
 from rest_framework import generics, status
 from rest_framework.authtoken.models import Token
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import Product
-from .serializers import ProductSerializer
+from .serializers import OrderCreateSerializer, ProductSerializer
 
 
 class HealthView(APIView):
@@ -62,3 +62,18 @@ class ProductDetailView(generics.RetrieveAPIView):
     serializer_class = ProductSerializer
     authentication_classes = []
     permission_classes = [AllowAny]
+
+
+class OrderListCreateView(generics.CreateAPIView):
+    """POST /orders - authenticated; the order is always tied to the requester."""
+
+    permission_classes = [IsAuthenticated]
+    serializer_class = OrderCreateSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(user=request.user)
+        return Response(
+            {"order_id": serializer.instance.id}, status=status.HTTP_201_CREATED
+        )

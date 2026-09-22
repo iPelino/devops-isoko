@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.core.validators import MinValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 
@@ -46,3 +46,26 @@ class Product(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.cooperative})"
+
+
+class Order(models.Model):
+    """A buyer's order for a quantity of a single product."""
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="orders"
+    )
+    product = models.ForeignKey(
+        Product, on_delete=models.CASCADE, related_name="orders"
+    )
+    quantity = models.IntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(50)],
+        help_text="1-50 inclusive, per order.",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "orders"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Order #{self.pk}: {self.product} x{self.quantity}"
