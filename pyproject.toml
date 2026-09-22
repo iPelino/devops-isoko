@@ -1,0 +1,9 @@
+[tool.ruff]
+target-version = "py312"
+extend-exclude = ["**/migrations/*.py"]
+
+[tool.ruff.lint]
+# RUF012: Django/DRF conventions (Meta.fields, permission_classes, etc.) rely on
+# plain class-level lists that are never mutated per-instance - a well-known
+# false positive for this framework, so it is disabled project-wide.
+ignore = ["RUF012"]
