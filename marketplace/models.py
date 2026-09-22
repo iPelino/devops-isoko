@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.core.validators import MinValueValidator
 from django.db import models
 
 
@@ -24,3 +25,24 @@ class Profile(models.Model):
 
     def __str__(self):
         return f"{self.user.username} ({self.role})"
+
+
+class Product(models.Model):
+    """A product listed by a cooperative.
+
+    Cooperative is a plain text field, not a foreign key, in Week 1 - see
+    the scenario data model.
+    """
+
+    name = models.TextField()
+    cooperative = models.TextField()
+    price_rwf = models.IntegerField(
+        validators=[MinValueValidator(0)],
+        help_text="Whole Rwandan francs. Isoko does not handle fractional RWF.",
+    )
+
+    class Meta:
+        db_table = "products"
+
+    def __str__(self):
+        return f"{self.name} ({self.cooperative})"

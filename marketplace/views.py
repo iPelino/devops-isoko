@@ -1,9 +1,12 @@
 from django.contrib.auth import authenticate
-from rest_framework import status
+from rest_framework import generics, status
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+from .models import Product
+from .serializers import ProductSerializer
 
 
 class HealthView(APIView):
@@ -32,3 +35,21 @@ class LoginView(APIView):
             )
         token, _ = Token.objects.get_or_create(user=user)
         return Response({"token": token.key})
+
+
+class ProductSearchView(generics.ListAPIView):
+    """GET /products/search - public, filters by name and/or cooperative."""
+
+    serializer_class = ProductSerializer
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        queryset = Product.objects.all().order_by("id")
+        q = self.request.query_params.get("q")
+        cooperative = self.request.query_params.get("cooperative")
+        if q:
+            queryset = queryset.filter(name__icontains=q)
+        if cooperative:
+            queryset = queryset.filter(cooperative__icontains=cooperative)
+        return queryset
