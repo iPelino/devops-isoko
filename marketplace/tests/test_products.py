@@ -46,3 +46,29 @@ class ProductSearchTests(APITestCase):
         response = self.client.get("/products/search")
 
         self.assertEqual(response.status_code, 200)
+
+
+class ProductDetailTests(APITestCase):
+    def setUp(self):
+        self.product = Product.objects.create(
+            name="Potatoes", cooperative="Nyagatare Farmers Union", price_rwf=300
+        )
+
+    def test_product_detail(self):
+        response = self.client.get(f"/products/{self.product.id}")
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body["id"], self.product.id)
+        self.assertEqual(body["price_rwf"], 300)
+        self.assertEqual(body["cooperative"], "Nyagatare Farmers Union")
+
+    def test_product_detail_not_found(self):
+        response = self.client.get("/products/999999")
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_product_detail_does_not_require_authentication(self):
+        response = self.client.get(f"/products/{self.product.id}")
+
+        self.assertEqual(response.status_code, 200)

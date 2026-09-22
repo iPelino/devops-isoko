@@ -53,3 +53,12 @@ class ProductSearchView(generics.ListAPIView):
         if cooperative:
             queryset = queryset.filter(cooperative__icontains=cooperative)
         return queryset
+
+
+class ProductDetailView(generics.RetrieveAPIView):
+    """GET /products/<id> - public, 404 when the product does not exist."""
+
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
+    authentication_classes = []
+    permission_classes = [AllowAny]
