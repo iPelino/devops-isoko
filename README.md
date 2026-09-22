@@ -1,2 +1,2 @@
-# devops-isoko
+# DevOps-isoko
 just some demo project
