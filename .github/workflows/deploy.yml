@@ -1,0 +1,80 @@
+name: deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Image tag to promote (for example, a commit SHA or v1.0.0)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-deployment
+  cancel-in-progress: false
+
+jobs:
+  production:
+    name: promote image to production validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: production
+    permissions:
+      contents: read
+      packages: read
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: isoko
+          POSTGRES_USER: isoko
+          POSTGRES_PASSWORD: isoko
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U isoko -d isoko"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      TAG: ${{ inputs.tag }}
+      IMAGE: ghcr.io/${{ github.repository }}
+    steps:
+      - uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3.5.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - name: Validate tag and resolve digest
+        id: image
+        run: |
+          [[ "$TAG" =~ ^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$ ]]
+          digest=$(docker buildx imagetools inspect "$IMAGE:$TAG" --format '{{json .Manifest}}' | jq -r '.digest')
+          [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]
+          echo "ref=$IMAGE@$digest" >> "$GITHUB_OUTPUT"
+          echo "Resolved $IMAGE:$TAG to $digest"
+      - name: Pull exact image
+        run: docker pull "${{ steps.image.outputs.ref }}"
+      - name: Start promoted image
+        run: |
+          docker run -d --name isoko --network host \
+            -e DJANGO_DEBUG=true \
+            -e DJANGO_SECRET_KEY=production-validation-only-not-a-secret \
+            -e POSTGRES_DB=isoko \
+            -e POSTGRES_USER=isoko \
+            -e POSTGRES_PASSWORD=isoko \
+            -e POSTGRES_HOST=127.0.0.1 \
+            -e POSTGRES_PORT=5432 \
+            "${{ steps.image.outputs.ref }}"
+          docker exec isoko python manage.py migrate --noinput
+          for _ in $(seq 1 30); do
+            curl --fail --silent http://127.0.0.1:8000/health && exit 0
+            sleep 1
+          done
+          docker logs isoko
+          exit 1
+      - if: failure()
+        run: docker logs isoko

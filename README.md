@@ -10,25 +10,27 @@ history. This repo is a solo practice build of the Isoko Week 1 scenario
 
 - Python 3.12, Django 6.1, Django REST Framework
 - Token authentication (`rest_framework.authtoken`)
-- SQLite for local development
+- PostgreSQL 16
 - `ruff` for linting/formatting, `pre-commit` to enforce it on every commit
 
 ## Running it locally
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-
-python manage.py migrate
-python manage.py seed_demo_data   # creates buyer1/manager1 + sample products
-python manage.py runserver
+cp .env.example .env
+docker compose up -d
+docker compose run --rm web python manage.py migrate
+docker compose run --rm web python manage.py seed_demo_data
 ```
 
 The API is then at `http://localhost:8000`. Try it:
 
 ```bash
+docker compose logs -f web
+```
+
+```bash
 curl http://localhost:8000/health
+curl http://localhost:8000/metrics
 curl "http://localhost:8000/products/search?q=tomato"
 
 TOKEN=$(curl -s -X POST http://localhost:8000/login \
@@ -52,8 +54,12 @@ curl http://localhost:8000/orders -H "Authorization: Token $TOKEN"
 ## Testing
 
 ```bash
-python manage.py test marketplace
+make check
+make coverage
 ```
+
+For container operations and the optional Prometheus/Grafana profile, see
+[`docs/containers.md`](docs/containers.md).
 
 ## Contributing
 
