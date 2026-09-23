@@ -1,0 +1,13 @@
+# Normalize line endings for everyone, regardless of local git config.
+* text=auto eol=lf
+
+*.py text diff=python
+*.md text
+*.yml text
+*.yaml text
+*.json text
+
+# Binary-ish files that should never be diffed or line-ending-normalized.
+*.sqlite3 -text -diff
+*.png binary
+*.jpg binary
