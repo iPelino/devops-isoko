@@ -1,9 +1,12 @@
 from django.contrib.auth import authenticate
+from django.http import HttpResponse
 from rest_framework import generics, status
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+from isoko.metrics import render_metrics
 
 from .models import Product
 from .serializers import OrderCreateSerializer, OrderSerializer, ProductSerializer
@@ -17,6 +20,15 @@ class HealthView(APIView):
 
     def get(self, request):
         return Response({"status": "ok"})
+
+
+class MetricsView(APIView):
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        body, content_type = render_metrics()
+        return HttpResponse(body, content_type=content_type)
 
 
 class LoginView(APIView):
