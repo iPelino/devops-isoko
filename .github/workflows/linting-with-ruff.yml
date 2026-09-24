@@ -1,0 +1,24 @@
+name: Ruff Formatting
+
+on: 
+  pull_request:
+    branches: ["main"]
+  push:
+    branches: ["dev"]
+  workflow_dispatch: 
+
+jobs:
+  printing:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+        
+      - name: Setup Python
+        uses: actions/setup-python@v7.0.0
+        
+      - name: Install dependencies
+        run: pip install ruff
+        
+      - name: Ruff Linting
+        run: ruff check .
