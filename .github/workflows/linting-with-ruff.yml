@@ -26,4 +26,4 @@ jobs:
         run: ruff check .
 
       - name: printing a name
-        run: echo "${{secrets.MY_NAME}}
+        run: echo "${{secrets.MY_NAME}}"
