@@ -44,7 +44,23 @@ jobs:
         uses: docker/setup-buildx-action@v4.4.1
         
 
-      # - name: printing a name
-      #   run: |
-      #     name = ${{secrets.MY_NAME}}
-      #     print(name)
+      - name: Docker Login
+        uses: docker/login-action@v4.6.0
+        with:
+          username: ${{secrets.DOCKERHUB_USERNAME}}
+          password: ${{secrets.DOCKERHUB_TOKEN}}
+
+      - name: Build and Push
+        uses: docker/build-push-action@v7.4.0
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME}}/isoko:latest
+            ${{ secrets.DOCKERHUB_USERNAME}}/isoko:${{github.sha}}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+            
+          
