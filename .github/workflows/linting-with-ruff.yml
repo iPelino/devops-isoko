@@ -25,7 +25,7 @@ jobs:
       - name: Ruff Linting
         run: ruff check .
 
-      - name: printing a name
-        run: |
-          name = ${{secrets.MY_NAME}}
-          print(name)
+      # - name: printing a name
+      #   run: |
+      #     name = ${{secrets.MY_NAME}}
+      #     print(name)
