@@ -24,3 +24,6 @@ jobs:
         
       - name: Ruff Linting
         run: ruff check .
+
+      - name: printing a name
+        run: echo "${{secrets.MY_NAME}}
